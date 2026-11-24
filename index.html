@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NCR Urban Connectivity | Metro Manila Green Spaces</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body, #map {
+      width: 100%;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #e5e7eb;
+    }
+
+    .control-panel {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 1000;
+      width: 300px;
+      max-height: calc(100vh - 28px);
+      overflow-y: auto;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(6px);
+      border-radius: 10px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.16);
+      padding: 14px 16px;
+      color: #1f2937;
+      font-size: 13px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .panel-header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1.25;
+    }
+
+    .panel-header span {
+      font-size: 11px;
+      color: #6b7280;
+      display: block;
+      font-weight: 400;
+    }
+
+    .section {
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #4b5563;
+      margin-bottom: 6px;
+    }
+
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .btn-group.four-col {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    button.ctrl-btn {
+      appearance: none;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      color: #374151;
+      border-radius: 6px;
+      padding: 7px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+
+    button.ctrl-btn:hover {
+      background: #f3f4f6;
+      border-color: #9ca3af;
+    }
+
+    button.ctrl-btn.active {
+      background: #15803d;
+      color: #ffffff;
+      border-color: #15803d;
+    }
+
+    button.ctrl-btn.active-link {
+      background: #7e22ce;
+      color: #ffffff;
+      border-color: #7e22ce;
+    }
+
+    button.zoom-btn {
+      width: 100%;
+      background: #1f2937;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    button.zoom-btn:hover {
+      background: #111827;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .swatch-patch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      background: #16a34a;
+      border: 1px solid #14532d;
+      display: inline-block;
+    }
+
+    .stats-box {
+      background: #f3f4f6;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #374151;
+    }
+
+    .stats-box strong {
+      color: #111827;
+    }
+
+    .inspector-box {
+      background: #fefce8;
+      border: 1px solid #fde047;
+      border-radius: 6px;
+      padding: 9px 10px;
+      font-size: 12px;
+      line-height: 1.45;
+      display: none;
+    }
+
+    .inspector-box.visible {
+      display: block;
+    }
+
+    .inspector-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      color: #854d0e;
+      margin-bottom: 4px;
+    }
+
+    .clear-sel {
+      background: none;
+      border: none;
+      color: #a16207;
+      font-size: 11px;
+      text-decoration: underline;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .status-toast {
+      position: absolute;
+      bottom: 24px;
+      left: 14px;
+      z-index: 1000;
+      background: rgba(17, 24, 39, 0.92);
+      color: #ffffff;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+      max-width: 420px;
+    }
+
+    .status-toast.error {
+      background: #991b1b;
+    }
+
+    .leaflet-popup-content {
+      font-size: 12.5px;
+      line-height: 1.45;
+      margin: 10px 12px;
+    }
+
+    .popup-title {
+      font-weight: 700;
+      font-size: 13.5px;
+      color: #111827;
+      margin-bottom: 4px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    @media (max-width: 600px) {
+      .control-panel {
+        width: calc(100% - 20px);
+        left: 10px;
+        right: 10px;
+        top: 10px;
+        max-height: 46vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div class="control-panel">
+    <div class="panel-header">
+      <div>
+        <h1>NCR Urban Connectivity</h1>
+        <span>Metro Manila Dense Vegetation Network</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <button id="btn-zoom-ncr" class="zoom-btn" type="button">
+        Zoom to Metro Manila
+      </button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Basemap View</div>
+      <div class="btn-group">
+        <button id="btn-base-light" class="ctrl-btn active" type="button">Light Map (No Labels)</button>
+        <button id="btn-base-sat" class="ctrl-btn" type="button">Satellite View</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Habitat Patches</div>
+      <label class="toggle-row" for="chk-patches">
+        <span class="toggle-left">
+          <span class="swatch-patch"></span>
+          Dense Vegetation Patches
+        </span>
+        <input id="chk-patches" type="checkbox" checked />
+      </label>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Dispersal Threshold (True Edge Links)</div>
+      <div class="btn-group four-col">
+        <button class="ctrl-btn threshold-btn" data-threshold="none" type="button">Off</button>
+        <button class="ctrl-btn threshold-btn" data-threshold="100" type="button">100 m</button>
+        <button class="ctrl-btn threshold-btn" data-threshold="400" type="button">400 m</button>
+        <button class="ctrl-btn threshold-btn active-link" data-threshold="1000" type="button">1000 m</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div id="stats-box" class="stats-box">
+        Loading spatial layers...
+      </div>
+    </div>
+
+    <div id="inspector-box" class="inspector-box">
+      <div class="inspector-header">
+        <span id="inspector-title">Selected Feature</span>
+        <button id="btn-clear-sel" class="clear-sel" type="button">Clear</button>
+      </div>
+      <div id="inspector-body"></div>
+    </div>
+  </div>
+
+  <div id="status-toast" class="status-toast">Loading Metro Manila patches &amp; connectivity links...</div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script>
+    const PHILIPPINES_BOUNDS = L.latLngBounds(
+      [4.40, 116.50],
+      [21.30, 127.00]
+    );
+
+    let metroManilaBounds = L.latLngBounds(
+      [14.345, 120.900],
+      [14.785, 121.135]
+    );
+
+    const map = L.map("map", {
+      center: [14.58, 121.02],
+      zoom: 11,
+      minZoom: 6,
+      maxZoom: 19,
+      maxBounds: PHILIPPINES_BOUNDS,
+      maxBoundsViscosity: 1.0,
+      preferCanvas: true
+    });
+
+    map.createPane("patchesPane");
+    map.getPane("patchesPane").style.zIndex = 410;
+
+    map.createPane("linksPane");
+    map.getPane("linksPane").style.zIndex = 440;
+
+    map.createPane("highlightPane");
+    map.getPane("highlightPane").style.zIndex = 470;
+
+    const lightGrayNoLabels = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+      {
+        attribution: "Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ",
+        maxNativeZoom: 16,
+        maxZoom: 19
+      }
+    );
+
+    const satelliteImagery = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      {
+        attribution: "Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+        maxNativeZoom: 18,
+        maxZoom: 19
+      }
+    );
+
+    lightGrayNoLabels.addTo(map);
+
+    let patchesGeoJson = null;
+    let patchesLayer = null;
+    const patchLookup = new Map();
+
+    const linkDataCache = {};
+    let activeLinksLayer = null;
+    let activeThreshold = "1000";
+
+    const highlightGroup = L.featureGroup([], { pane: "highlightPane" }).addTo(map);
+
+    const statusToast = document.getElementById("status-toast");
+    const statsBox = document.getElementById("stats-box");
+    const inspectorBox = document.getElementById("inspector-box");
+    const inspectorTitle = document.getElementById("inspector-title");
+    const inspectorBody = document.getElementById("inspector-body");
+
+    function showStatus(msg, isError = false, autoHideMs = 0) {
+      statusToast.textContent = msg;
+      statusToast.className = isError ? "status-toast error" : "status-toast";
+      statusToast.style.display = "block";
+      if (autoHideMs > 0) {
+        setTimeout(() => {
+          statusToast.style.display = "none";
+        }, autoHideMs);
+      }
+    }
+
+    function getPatchId(props) {
+      if (!props) return "Unknown";
+      const val = props.patches !== undefined && props.patches !== null ? props.patches : props.fid;
+      return String(val);
+    }
+
+    function formatNumber(num, decimals = 2) {
+      const parsed = Number(num);
+      if (Number.isNaN(parsed)) return "N/A";
+      return parsed.toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function clearSelection() {
+      highlightGroup.clearLayers();
+      inspectorBox.classList.remove("visible");
+      map.closePopup();
+    }
+
+    document.getElementById("btn-clear-sel").addEventListener("click", clearSelection);
+
+    function inspectPatch(feature, latlng) {
+      clearSelection();
+      const props = feature.properties || {};
+      const pid = getPatchId(props);
+
+      L.geoJSON(feature, {
+        pane: "highlightPane",
+        style: {
+          color: "#f59e0b",
+          weight: 3,
+          fillColor: "#fde047",
+          fillOpacity: 0.55
+        }
+      }).addTo(highlightGroup);
+
+      let connectedLinks = [];
+      if (activeThreshold !== "none" && linkDataCache[activeThreshold]) {
+        connectedLinks = linkDataCache[activeThreshold].features.filter((lf) => {
+          const lp = lf.properties || {};
+          return String(lp.from_id) === pid || String(lp.to_id) === pid;
+        });
+
+        if (connectedLinks.length > 0) {
+          L.geoJSON(
+            { type: "FeatureCollection", features: connectedLinks },
+            {
+              pane: "highlightPane",
+              style: {
+                color: "#ef4444",
+                weight: 3.5,
+                opacity: 1
+              }
+            }
+          ).addTo(highlightGroup);
+        }
+      }
+
+      const neighborSummary =
+        activeThreshold === "none"
+          ? "Turn on a dispersal threshold to view links."
+          : connectedLinks.length === 0
+          ? `0 links at ${activeThreshold} m (isolated patch)`
+          : `${connectedLinks.length} corridor link(s) at ${activeThreshold} m`;
+
+      const neighborListHtml =
+        connectedLinks.length > 0
+          ? `<br><strong>Connected Patches:</strong> ` +
+            connectedLinks
+              .slice(0, 8)
+              .map((lf) => {
+                const lp = lf.properties || {};
+                const otherId = String(lp.from_id) === pid ? lp.to_id : lp.from_id;
+                return `#${otherId} (${formatNumber(lp.length_m, 1)} m)`;
+              })
+              .join(", ") +
+            (connectedLinks.length > 8 ? ` +${connectedLinks.length - 8} more` : "")
+          : "";
+
+      const html = `
+        <strong>Patch ID:</strong> #${pid}<br>
+        <strong>Area:</strong> ${formatNumber(props.area_ha, 2)} ha (${formatNumber(props.area_m2, 0)} m&sup2;)<br>
+        <strong>Size Class:</strong> ${props.size_bin ?? "N/A"}<br>
+        <strong>Connectivity:</strong> ${neighborSummary}${neighborListHtml}
+      `;
+
+      inspectorTitle.textContent = `Green Patch #${pid}`;
+      inspectorBody.innerHTML = html;
+      inspectorBox.classList.add("visible");
+
+      L.popup()
+        .setLatLng(latlng)
+        .setContent(`<div class="popup-title">Green Patch #${pid}</div>${html}`)
+        .openOn(map);
+    }
+
+    function inspectLink(feature, latlng) {
+      clearSelection();
+      const props = feature.properties || {};
+      const fromId = String(props.from_id ?? "N/A");
+      const toId = String(props.to_id ?? "N/A");
+
+      L.geoJSON(feature, {
+        pane: "highlightPane",
+        style: {
+          color: "#ef4444",
+          weight: 4.5,
+          opacity: 1
+        }
+      }).addTo(highlightGroup);
+
+      const patchA = patchLookup.get(fromId);
+      const patchB = patchLookup.get(toId);
+      [patchA, patchB].forEach((pf) => {
+        if (pf) {
+          L.geoJSON(pf, {
+            pane: "highlightPane",
+            style: {
+              color: "#0284c7",
+              weight: 2.5,
+              fillColor: "#38bdf8",
+              fillOpacity: 0.45
+            }
+          }).addTo(highlightGroup);
+        }
+      });
+
+      const areaAText = patchA ? ` (${formatNumber(patchA.properties.area_ha, 2)} ha)` : "";
+      const areaBText = patchB ? ` (${formatNumber(patchB.properties.area_ha, 2)} ha)` : "";
+
+      const html = `
+        <strong>Threshold:</strong> ${activeThreshold} m dispersal<br>
+        <strong>Edge-to-Edge Distance:</strong> ${formatNumber(props.length_m, 1)} m<br>
+        <strong>Connects:</strong> Patch #${fromId}${areaAText} &harr; Patch #${toId}${areaBText}
+      `;
+
+      inspectorTitle.textContent = `Potential Corridor Link`;
+      inspectorBody.innerHTML = html;
+      inspectorBox.classList.add("visible");
+
+      L.popup()
+        .setLatLng(latlng)
+        .setContent(`<div class="popup-title">Potential Corridor (${activeThreshold} m)</div>${html}`)
+        .openOn(map);
+    }
+
+    function updateStats() {
+      const patchCount = patchesGeoJson ? patchesGeoJson.features.length.toLocaleString() : "0";
+      let linkText = "Hidden";
+      if (activeThreshold !== "none" && linkDataCache[activeThreshold]) {
+        const count = linkDataCache[activeThreshold].features.length.toLocaleString();
+        linkText = `${count} links (${activeThreshold} m threshold)`;
+      }
+      statsBox.innerHTML = `
+        <strong>Dense Green Patches:</strong> ${patchCount}<br>
+        <strong>Active Network:</strong> ${linkText}<br>
+        <span style="font-size:11px;color:#6b7280;">Click any green patch or purple corridor to inspect connectivity.</span>
+      `;
+    }
+
+    async function loadPatches() {
+      const res = await fetch("./data/patches.geojson");
+      if (!res.ok) throw new Error(`HTTP ${res.status} loading patches.geojson`);
+      patchesGeoJson = await res.json();
+
+      patchesGeoJson.features.forEach((f) => {
+        const pid = getPatchId(f.properties);
+        patchLookup.set(pid, f);
+      });
+
+      patchesLayer = L.geoJSON(patchesGeoJson, {
+        pane: "patchesPane",
+        style: {
+          color: "#15803d",
+          weight: 0.6,
+          fillColor: "#22c55e",
+          fillOpacity: 0.68
+        },
+        onEachFeature: (feature, layer) => {
+          layer.on("click", (e) => {
+            L.DomEvent.stopPropagation(e);
+            inspectPatch(feature, e.latlng);
+          });
+        }
+      }).addTo(map);
+
+      const bounds = patchesLayer.getBounds();
+      if (bounds.isValid()) {
+        metroManilaBounds = bounds;
+        map.fitBounds(metroManilaBounds, { padding: [18, 18] });
+      }
+    }
+
+    async function setThreshold(threshold) {
+      activeThreshold = threshold;
+      clearSelection();
+
+      document.querySelectorAll(".threshold-btn").forEach((btn) => {
+        btn.classList.toggle("active-link", btn.dataset.threshold === threshold);
+      });
+
+      if (activeLinksLayer) {
+        map.removeLayer(activeLinksLayer);
+        activeLinksLayer = null;
+      }
+
+      if (threshold === "none") {
+        updateStats();
+        return;
+      }
+
+      if (!linkDataCache[threshold]) {
+        showStatus(`Loading ${threshold} m dispersal links...`);
+        const res = await fetch(`./data/links_${threshold}.geojson`);
+        if (!res.ok) throw new Error(`HTTP ${res.status} loading links_${threshold}.geojson`);
+        linkDataCache[threshold] = await res.json();
+        showStatus(`Loaded ${threshold} m network`, false, 1800);
+      }
+
+      activeLinksLayer = L.geoJSON(linkDataCache[threshold], {
+        pane: "linksPane",
+        style: {
+          color: "#7e22ce",
+          weight: threshold === "1000" ? 1.5 : 1.8,
+          opacity: 0.85
+        },
+        onEachFeature: (feature, layer) => {
+          layer.on("click", (e) => {
+            L.DomEvent.stopPropagation(e);
+            inspectLink(feature, e.latlng);
+          });
+        }
+      }).addTo(map);
+
+      updateStats();
+    }
+
+    document.getElementById("btn-zoom-ncr").addEventListener("click", () => {
+      map.flyToBounds(metroManilaBounds, { padding: [18, 18], duration: 0.9 });
+    });
+
+    const btnBaseLight = document.getElementById("btn-base-light");
+    const btnBaseSat = document.getElementById("btn-base-sat");
+
+    btnBaseLight.addEventListener("click", () => {
+      if (!map.hasLayer(lightGrayNoLabels)) {
+        map.removeLayer(satelliteImagery);
+        lightGrayNoLabels.addTo(map);
+      }
+      btnBaseLight.classList.add("active");
+      btnBaseSat.classList.remove("active");
+    });
+
+    btnBaseSat.addEventListener("click", () => {
+      if (!map.hasLayer(satelliteImagery)) {
+        map.removeLayer(lightGrayNoLabels);
+        satelliteImagery.addTo(map);
+      }
+      btnBaseSat.classList.add("active");
+      btnBaseLight.classList.remove("active");
+    });
+
+    document.getElementById("chk-patches").addEventListener("change", (e) => {
+      if (!patchesLayer) return;
+      if (e.target.checked) {
+        patchesLayer.addTo(map);
+      } else {
+        map.removeLayer(patchesLayer);
+      }
+    });
+
+    document.querySelectorAll(".threshold-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setThreshold(btn.dataset.threshold).catch((err) => {
+          showStatus(`Error: ${err.message}`, true);
+        });
+      });
+    });
+
+    (async function init() {
+      try {
+        await loadPatches();
+        await setThreshold("1000");
+        showStatus("Ready — click any patch or corridor link to inspect.", false, 3000);
+      } catch (err) {
+        console.error(err);
+        showStatus(
+          "Could not load ./data/*.geojson. Upload to GitHub Pages or use a local HTTP server to preview.",
+          true
+        );
+      }
+    })();
+  </script>
+</body>
+</html>
