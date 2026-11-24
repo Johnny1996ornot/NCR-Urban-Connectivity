@@ -28,7 +28,7 @@
       top: 14px;
       right: 14px;
       z-index: 1000;
-      width: 315px;
+      width: 320px;
       max-height: calc(100vh - 28px);
       overflow-y: auto;
       background: rgba(255, 255, 255, 0.96);
@@ -179,15 +179,37 @@
 
     .stats-box {
       background: #f3f4f6;
-      border-radius: 6px;
-      padding: 8px 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 9px 11px;
       font-size: 12px;
-      line-height: 1.5;
+      line-height: 1.55;
       color: #374151;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .stats-box:hover {
+      background: #e5e7eb;
+      border-color: #9ca3af;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     }
 
     .stats-box strong {
       color: #111827;
+    }
+
+    .stats-help-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 6px;
+      padding-top: 5px;
+      border-top: 1px dashed #cbd5e1;
+      width: 100%;
+      font-size: 11px;
+      font-weight: 600;
+      color: #065f46;
     }
 
     .inspector-box {
@@ -256,6 +278,101 @@
       border-bottom: 1px solid #e5e7eb;
     }
 
+    /* Glossary Modal Styles */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(17, 24, 39, 0.58);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      color: #1f2937;
+      width: 100%;
+      max-width: 540px;
+      max-height: 86vh;
+      overflow-y: auto;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
+      padding: 20px 22px;
+    }
+
+    .modal-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 14px;
+    }
+
+    .modal-top h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .modal-top p {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .modal-close {
+      appearance: none;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      color: #374151;
+      border-radius: 6px;
+      width: 30px;
+      height: 30px;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .modal-close:hover {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .term-item {
+      margin-bottom: 13px;
+      padding-bottom: 11px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .term-item:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .term-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #065f46;
+      margin-bottom: 3px;
+    }
+
+    .term-desc {
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: #374151;
+    }
+
     @media (max-width: 600px) {
       .control-panel {
         width: calc(100% - 20px);
@@ -317,7 +434,13 @@
     </div>
 
     <div class="section">
-      <div id="stats-box" class="stats-box">
+      <div
+        id="stats-box"
+        class="stats-box"
+        role="button"
+        tabindex="0"
+        title="Click to open definitions of functional links, network components, and ecological condition"
+      >
         Loading spatial layers...
       </div>
     </div>
@@ -328,6 +451,61 @@
         <button id="btn-clear-sel" class="clear-sel" type="button">Clear</button>
       </div>
       <div id="inspector-body"></div>
+    </div>
+  </div>
+
+  <!-- Metrics Explanation Modal -->
+  <div id="metrics-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
+    <div class="modal-card">
+      <div class="modal-top">
+        <div>
+          <h2 id="modal-heading">Understanding Landscape Connectivity Metrics</h2>
+          <p>Definitions from the Metro Manila Urban Green Space Network Study</p>
+        </div>
+        <button id="btn-close-modal" class="modal-close" type="button" aria-label="Close guide">&times;</button>
+      </div>
+
+      <div class="term-item">
+        <div class="term-title">Dense Green Patches (3,064 patches)</div>
+        <div class="term-desc">
+          Contiguous clusters of dense tree canopy and urban vegetation identified across Metro Manila's 17 LGUs from 30 m Landsat 8/9 imagery. Each patch acts as a habitat refuge or stepping stone for urban wildlife.
+        </div>
+      </div>
+
+      <div class="term-item">
+        <div class="term-title">Dispersal Threshold (100 m, 400 m, 1,000 m)</div>
+        <div class="term-desc">
+          The maximum edge-to-edge distance an organism can cross through the built-up urban matrix between green spaces. Short thresholds (<strong>100 m</strong>) reflect gap-sensitive understory species; wider thresholds (<strong>400 m</strong> and <strong>1,000 m</strong>) represent more mobile urban birds.
+        </div>
+      </div>
+
+      <div class="term-item">
+        <div class="term-title">Functional Links (3,420 / 9,616 / 11,574)</div>
+        <div class="term-desc">
+          Direct potential movement pathways connecting any two green patches whose edge-to-edge gap is within the selected dispersal threshold—even if a bird flies over intermediate patches without stopping. Higher link counts indicate stronger route redundancy and movement options across the city.
+        </div>
+      </div>
+
+      <div class="term-item">
+        <div class="term-title">Maximum Link Weight (3.33 / 13.33 / 33.33)</div>
+        <div class="term-desc">
+          The dispersal distance threshold expressed in 30 m Landsat pixel units (threshold in meters divided by 30 m pixel resolution), matching the graph cost-distance scale used in the study.
+        </div>
+      </div>
+
+      <div class="term-item">
+        <div class="term-title">Network Components (2,290 / 215 / 15)</div>
+        <div class="term-desc">
+          Separate, isolated sub-networks of connected patches. Wildlife can move freely among patches inside the same component, but cannot cross gaps separating different components. Fewer components mean a more unified habitat network—at <strong>1,000 m</strong>, Metro Manila's 3,064 patches consolidate into just <strong>15</strong> connected components.
+        </div>
+      </div>
+
+      <div class="term-item">
+        <div class="term-title">Ecological Condition</div>
+        <div class="term-desc">
+          Overall landscape permeability classification at each dispersal distance: <strong>Severely fragmented</strong> at 100 m (2,290 isolated clusters), <strong>Fragmented</strong> at 400 m (215 clusters), and <strong>Highly connected</strong> at 1,000 m (15 clusters).
+        </div>
+      </div>
     </div>
   </div>
 
@@ -349,10 +527,26 @@
       [14.785, 121.135]
     );
 
-    const THRESHOLD_META = {
-      "100": { components: "2,290", condition: "Severely fragmented" },
-      "400": { components: "215", condition: "Fragmented" },
-      "1000": { components: "15", condition: "Highly connected" }
+    // Exact Table 2 metrics from the manuscript
+    const PAPER_TABLE_2 = {
+      "100": {
+        maxWeight: "3.33",
+        links: "3,420",
+        components: "2,290",
+        condition: "Severely fragmented"
+      },
+      "400": {
+        maxWeight: "13.33",
+        links: "9,616",
+        components: "215",
+        condition: "Fragmented"
+      },
+      "1000": {
+        maxWeight: "33.33",
+        links: "11,574",
+        components: "15",
+        condition: "Highly connected"
+      }
     };
 
     const map = L.map("map", {
@@ -409,6 +603,34 @@
     const inspectorBox = document.getElementById("inspector-box");
     const inspectorTitle = document.getElementById("inspector-title");
     const inspectorBody = document.getElementById("inspector-body");
+    const metricsModal = document.getElementById("metrics-modal");
+
+    // Modal open/close handlers
+    function openMetricsModal() {
+      metricsModal.classList.add("open");
+    }
+
+    function closeMetricsModal() {
+      metricsModal.classList.remove("open");
+    }
+
+    statsBox.addEventListener("click", openMetricsModal);
+    statsBox.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openMetricsModal();
+      }
+    });
+
+    document.getElementById("btn-close-modal").addEventListener("click", closeMetricsModal);
+    metricsModal.addEventListener("click", (e) => {
+      if (e.target === metricsModal) closeMetricsModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && metricsModal.classList.contains("open")) {
+        closeMetricsModal();
+      }
+    });
 
     function showStatus(msg, isError = false, autoHideMs = 0) {
       statusToast.textContent = msg;
@@ -425,38 +647,6 @@
       if (!props) return "Unknown";
       const val = props.patches !== undefined && props.patches !== null ? props.patches : props.fid;
       return String(val);
-    }
-
-    function getLinkEndpoints(props) {
-      if (!props) return { from: null, to: null };
-      const fromKeys = ["from_id", "from", "patch_from", "patch1", "node1", "source", "src"];
-      const toKeys = ["to_id", "to", "patch_to", "patch2", "node2", "target", "dst"];
-      let fromVal = null;
-      let toVal = null;
-      for (const k of fromKeys) {
-        if (props[k] !== undefined && props[k] !== null) {
-          fromVal = String(props[k]);
-          break;
-        }
-      }
-      for (const k of toKeys) {
-        if (props[k] !== undefined && props[k] !== null) {
-          toVal = String(props[k]);
-          break;
-        }
-      }
-      return { from: fromVal, to: toVal };
-    }
-
-    function getLinkDistance(props) {
-      if (!props) return null;
-      const distKeys = ["length_m", "dist_m", "distance_m", "distance", "length", "cost", "weight"];
-      for (const k of distKeys) {
-        if (props[k] !== undefined && props[k] !== null && !Number.isNaN(Number(props[k]))) {
-          return Number(props[k]);
-        }
-      }
-      return null;
     }
 
     function formatNumber(num, decimals = 2) {
@@ -494,8 +684,8 @@
       let connectedLinks = [];
       if (activeThreshold !== "none" && linkDataCache[activeThreshold]) {
         connectedLinks = linkDataCache[activeThreshold].features.filter((lf) => {
-          const ep = getLinkEndpoints(lf.properties);
-          return ep.from === pid || ep.to === pid;
+          const lp = lf.properties || {};
+          return String(lp.from_id) === pid || String(lp.to_id) === pid;
         });
 
         if (connectedLinks.length > 0) {
@@ -526,12 +716,9 @@
             connectedLinks
               .slice(0, 8)
               .map((lf) => {
-                const ep = getLinkEndpoints(lf.properties);
-                const otherId = ep.from === pid ? ep.to : ep.from;
-                const distVal = getLinkDistance(lf.properties);
-                return distVal !== null
-                  ? `#${otherId} (${formatNumber(distVal, 1)} m)`
-                  : `#${otherId}`;
+                const lp = lf.properties || {};
+                const otherId = String(lp.from_id) === pid ? lp.to_id : lp.from_id;
+                return `#${otherId} (${formatNumber(lp.length_m, 1)} m)`;
               })
               .join(", ") +
             (connectedLinks.length > 8 ? ` +${connectedLinks.length - 8} more` : "")
@@ -557,8 +744,8 @@
     function inspectLink(feature, latlng) {
       clearSelection();
       const props = feature.properties || {};
-      const ep = getLinkEndpoints(props);
-      const distVal = getLinkDistance(props);
+      const fromId = String(props.from_id ?? "N/A");
+      const toId = String(props.to_id ?? "N/A");
 
       L.geoJSON(feature, {
         pane: "highlightPane",
@@ -569,8 +756,8 @@
         }
       }).addTo(highlightGroup);
 
-      const patchA = ep.from ? patchLookup.get(ep.from) : null;
-      const patchB = ep.to ? patchLookup.get(ep.to) : null;
+      const patchA = patchLookup.get(fromId);
+      const patchB = patchLookup.get(toId);
       [patchA, patchB].forEach((pf) => {
         if (pf) {
           L.geoJSON(pf, {
@@ -587,17 +774,11 @@
 
       const areaAText = patchA ? ` (${formatNumber(patchA.properties.area_ha, 2)} ha)` : "";
       const areaBText = patchB ? ` (${formatNumber(patchB.properties.area_ha, 2)} ha)` : "";
-      const connectsLine =
-        ep.from && ep.to
-          ? `<br><strong>Connects:</strong> Patch #${ep.from}${areaAText} &harr; Patch #${ep.to}${areaBText}`
-          : "";
-      const distLine =
-        distVal !== null
-          ? `<br><strong>Link Metric / Distance:</strong> ${formatNumber(distVal, 2)}`
-          : "";
 
       const html = `
-        <strong>Threshold:</strong> ${activeThreshold} m dispersal${distLine}${connectsLine}
+        <strong>Threshold:</strong> ${activeThreshold} m dispersal<br>
+        <strong>Edge-to-Edge Distance:</strong> ${formatNumber(props.length_m, 1)} m (${formatNumber(props.weight_px, 2)} px)<br>
+        <strong>Connects:</strong> Patch #${fromId}${areaAText} &harr; Patch #${toId}${areaBText}
       `;
 
       inspectorTitle.textContent = `Functional Corridor Link`;
@@ -611,24 +792,24 @@
     }
 
     function updateStats() {
-      const patchCount = patchesGeoJson ? patchesGeoJson.features.length.toLocaleString() : "0";
-      if (activeThreshold === "none" || !linkDataCache[activeThreshold]) {
+      const patchCount = patchesGeoJson ? patchesGeoJson.features.length.toLocaleString() : "3,064";
+      if (activeThreshold === "none" || !PAPER_TABLE_2[activeThreshold]) {
         statsBox.innerHTML = `
           <strong>Dense Green Patches:</strong> ${patchCount}<br>
           <strong>Functional Links:</strong> Hidden<br>
-          <span style="font-size:11px;color:#6b7280;">Click any dark green patch or red link to inspect connectivity.</span>
+          <span class="stats-help-hint">&#9432; Click here to explain functional links &amp; components</span>
         `;
         return;
       }
 
-      const count = linkDataCache[activeThreshold].features.length.toLocaleString();
-      const meta = THRESHOLD_META[activeThreshold] || { components: "N/A", condition: "N/A" };
+      const row = PAPER_TABLE_2[activeThreshold];
       statsBox.innerHTML = `
         <strong>Dense Green Patches:</strong> ${patchCount}<br>
-        <strong>Functional Links (${activeThreshold} m):</strong> ${count}<br>
-        <strong>Network Components:</strong> ${meta.components}<br>
-        <strong>Condition:</strong> ${meta.condition}<br>
-        <span style="font-size:11px;color:#6b7280;">Click any dark green patch or red link to inspect connectivity.</span>
+        <strong>Functional Links (${activeThreshold} m):</strong> ${row.links}<br>
+        <strong>Max Link Weight:</strong> ${row.maxWeight} px<br>
+        <strong>Network Components:</strong> ${row.components}<br>
+        <strong>Condition:</strong> ${row.condition}<br>
+        <span class="stats-help-hint">&#9432; Click here to explain functional links &amp; components</span>
       `;
     }
 
@@ -695,8 +876,8 @@
         pane: "linksPane",
         style: {
           color: "#dc2626",
-          weight: threshold === "1000" ? 1.5 : 2.0,
-          opacity: 0.90
+          weight: threshold === "1000" ? 1.1 : 1.7,
+          opacity: threshold === "1000" ? 0.65 : 0.88
         },
         onEachFeature: (feature, layer) => {
           layer.on("click", (e) => {
@@ -755,7 +936,7 @@
       try {
         await loadPatches();
         await setThreshold("1000");
-        showStatus("Ready — click any dark green patch or red link to inspect.", false, 3000);
+        showStatus("Ready — click any patch, link, or the summary box for definitions.", false, 3200);
       } catch (err) {
         console.error(err);
         showStatus(

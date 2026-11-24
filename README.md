@@ -19,5 +19,5 @@ Interactive spatial network visualization of dense urban vegetation patches and 
 ## Map Features & Workflow
 
 1. **Land Cover & Patch Extraction:** Dense vegetation patches extracted from Landsat 8/9 imagery via supervised Random Forest classification in Google Earth Engine and analyzed at 30 m spatial resolution.
-2. **Spatial Graph Modeling:** Functional patch connectivity evaluated across `100 m`, `400 m`, and `1,000 m` avian/wildlife dispersal thresholds using `grainscape` in R and exported to WGS 84 (`EPSG:4326`) GeoJSON via PyQGIS.
-3. **Interactive Web Visualization:** Built with Leaflet.js Canvas rendering featuring label-free light street and satellite basemap toggles, threshold switching, and click-to-inspect patch and corridor metrics.
+2. **Spatial Graph Modeling:** All-pairs functional patch connectivity evaluated across `100 m`, `400 m`, and `1,000 m` avian/wildlife dispersal thresholds and exported to WGS 84 (`EPSG:4326`) GeoJSON via PyQGIS.
+3. **Interactive Web Visualization:** Built with Leaflet.js Canvas rendering featuring label-free light street and satellite basemap toggles, threshold switching, click-to-inspect patch and corridor metrics, and an interactive connectivity glossary.
