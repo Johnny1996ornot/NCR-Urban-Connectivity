@@ -1,19 +1,23 @@
 # NCR Urban Connectivity: Metro Manila Green Spaces
-Mapping and analyzing the landscape connectivity of urban green spaces in Metro Manila using spatial network models and least-cost path analysis in R.
 
-## Project Overview
-This project extracts, classifies, and models the structural connectivity of urban green spaces across the National Capital Region (NCR) of the Philippines. By utilizing high-resolution EVI (Enhanced Vegetation Index) multi-class rasters, the pipeline identifies ecologically significant habitat patches and routes dispersal corridors while accounting for major urban barriers like concrete infrastructure and water bodies.
+### 👉 [**Open the Live Interactive Web Map**](https://johnny1996ornot.github.io/NCR-Urban-Connectivity/)
 
-## Core Methodology
-1. **Spatial Extraction & Classification:** Isolates dense and sparse vegetation from multi-class GeoTIFFs using `terra`, applying Rook's (4-way) contiguity to delineate distinct habitat patches.
-2. **Habitat Metrics:** Calculates core area, edge area, and total physical patch size (in square meters) to evaluate the ecological value of over 77,000 distinct patches.
-3. **Least-Cost Path (LCP) Routing:** Utilizes the `grainscape` package to model ideal dispersal networks across the urban matrix, using weighted cost surfaces to penalize movement through concrete and sparse vegetation.
-4. **Memory-Safe Euclidean Barrier Modeling:** Implements a custom, chunk-based spatial intersection algorithm via the `sf` package to safely process hundreds of thousands of distance vectors, applying strict dispersal penalties (+500m) to any ecological corridor crossing a water body.
-5. **Interactive Visualization:** Packages the filtered, mathematically projected (WGS84) dataset into a lightweight `.rds` format for deployment on an interactive Shiny/Leaflet web dashboard.
+Interactive spatial network visualization of dense urban vegetation patches and multi-threshold functional dispersal corridors across the 17 local government units (LGUs) of Metro Manila, Philippines.
 
-## Built With
-* **R**
-* `sf` (Spatial vector handling)
-* `terra` (High-performance raster processing)
-* `grainscape` (Landscape connectivity modeling)
-* `Shiny` & `Leaflet` (Interactive web deployment)
+---
+
+## Network Connectivity Summary
+
+| Dispersal Threshold | Maximum Link Weight (30 m pixels) | Total Functional Links | Total Network Components | Ecological Condition |
+| :--- | :---: | :---: | :---: | :--- |
+| **1,000 m Threshold** | 33.33 | 11,574 | 15 | Highly connected |
+| **400 m Threshold** | 13.33 | 9,616 | 215 | Fragmented |
+| **100 m Threshold** | 3.33 | 3,420 | 2,290 | Severely fragmented |
+
+---
+
+## Map Features & Workflow
+
+1. **Land Cover & Patch Extraction:** Dense vegetation patches extracted from Landsat 8/9 imagery via supervised Random Forest classification in Google Earth Engine and analyzed at 30 m spatial resolution.
+2. **Spatial Graph Modeling:** Functional patch connectivity evaluated across `100 m`, `400 m`, and `1,000 m` avian/wildlife dispersal thresholds using `grainscape` in R and exported to WGS 84 (`EPSG:4326`) GeoJSON via PyQGIS.
+3. **Interactive Web Visualization:** Built with Leaflet.js Canvas rendering featuring label-free light street and satellite basemap toggles, threshold switching, and click-to-inspect patch and corridor metrics.

@@ -28,13 +28,13 @@
       top: 14px;
       right: 14px;
       z-index: 1000;
-      width: 300px;
+      width: 315px;
       max-height: calc(100vh - 28px);
       overflow-y: auto;
       background: rgba(255, 255, 255, 0.96);
       backdrop-filter: blur(6px);
       border-radius: 10px;
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.16);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
       padding: 14px 16px;
       color: #1f2937;
       font-size: 13px;
@@ -74,6 +74,9 @@
       letter-spacing: 0.04em;
       color: #4b5563;
       margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .btn-group {
@@ -106,15 +109,15 @@
     }
 
     button.ctrl-btn.active {
-      background: #15803d;
+      background: #065f46;
       color: #ffffff;
-      border-color: #15803d;
+      border-color: #065f46;
     }
 
     button.ctrl-btn.active-link {
-      background: #7e22ce;
+      background: #dc2626;
       color: #ffffff;
-      border-color: #7e22ce;
+      border-color: #dc2626;
     }
 
     button.zoom-btn {
@@ -158,11 +161,19 @@
     }
 
     .swatch-patch {
-      width: 12px;
-      height: 12px;
+      width: 13px;
+      height: 13px;
       border-radius: 3px;
-      background: #16a34a;
-      border: 1px solid #14532d;
+      background: #065f46;
+      border: 1px solid #022c22;
+      display: inline-block;
+    }
+
+    .swatch-link {
+      width: 14px;
+      height: 3px;
+      border-radius: 2px;
+      background: #dc2626;
       display: inline-block;
     }
 
@@ -171,7 +182,7 @@
       border-radius: 6px;
       padding: 8px 10px;
       font-size: 12px;
-      line-height: 1.45;
+      line-height: 1.5;
       color: #374151;
     }
 
@@ -293,7 +304,10 @@
     </div>
 
     <div class="section">
-      <div class="section-title">Dispersal Threshold (True Edge Links)</div>
+      <div class="section-title">
+        <span class="swatch-link"></span>
+        Dispersal Threshold (Functional Links)
+      </div>
       <div class="btn-group four-col">
         <button class="ctrl-btn threshold-btn" data-threshold="none" type="button">Off</button>
         <button class="ctrl-btn threshold-btn" data-threshold="100" type="button">100 m</button>
@@ -334,6 +348,12 @@
       [14.345, 120.900],
       [14.785, 121.135]
     );
+
+    const THRESHOLD_META = {
+      "100": { components: "2,290", condition: "Severely fragmented" },
+      "400": { components: "215", condition: "Fragmented" },
+      "1000": { components: "15", condition: "Highly connected" }
+    };
 
     const map = L.map("map", {
       center: [14.58, 121.02],
@@ -407,6 +427,38 @@
       return String(val);
     }
 
+    function getLinkEndpoints(props) {
+      if (!props) return { from: null, to: null };
+      const fromKeys = ["from_id", "from", "patch_from", "patch1", "node1", "source", "src"];
+      const toKeys = ["to_id", "to", "patch_to", "patch2", "node2", "target", "dst"];
+      let fromVal = null;
+      let toVal = null;
+      for (const k of fromKeys) {
+        if (props[k] !== undefined && props[k] !== null) {
+          fromVal = String(props[k]);
+          break;
+        }
+      }
+      for (const k of toKeys) {
+        if (props[k] !== undefined && props[k] !== null) {
+          toVal = String(props[k]);
+          break;
+        }
+      }
+      return { from: fromVal, to: toVal };
+    }
+
+    function getLinkDistance(props) {
+      if (!props) return null;
+      const distKeys = ["length_m", "dist_m", "distance_m", "distance", "length", "cost", "weight"];
+      for (const k of distKeys) {
+        if (props[k] !== undefined && props[k] !== null && !Number.isNaN(Number(props[k]))) {
+          return Number(props[k]);
+        }
+      }
+      return null;
+    }
+
     function formatNumber(num, decimals = 2) {
       const parsed = Number(num);
       if (Number.isNaN(parsed)) return "N/A";
@@ -432,18 +484,18 @@
       L.geoJSON(feature, {
         pane: "highlightPane",
         style: {
-          color: "#f59e0b",
+          color: "#facc15",
           weight: 3,
           fillColor: "#fde047",
-          fillOpacity: 0.55
+          fillOpacity: 0.65
         }
       }).addTo(highlightGroup);
 
       let connectedLinks = [];
       if (activeThreshold !== "none" && linkDataCache[activeThreshold]) {
         connectedLinks = linkDataCache[activeThreshold].features.filter((lf) => {
-          const lp = lf.properties || {};
-          return String(lp.from_id) === pid || String(lp.to_id) === pid;
+          const ep = getLinkEndpoints(lf.properties);
+          return ep.from === pid || ep.to === pid;
         });
 
         if (connectedLinks.length > 0) {
@@ -452,7 +504,7 @@
             {
               pane: "highlightPane",
               style: {
-                color: "#ef4444",
+                color: "#facc15",
                 weight: 3.5,
                 opacity: 1
               }
@@ -466,7 +518,7 @@
           ? "Turn on a dispersal threshold to view links."
           : connectedLinks.length === 0
           ? `0 links at ${activeThreshold} m (isolated patch)`
-          : `${connectedLinks.length} corridor link(s) at ${activeThreshold} m`;
+          : `${connectedLinks.length} functional link(s) at ${activeThreshold} m`;
 
       const neighborListHtml =
         connectedLinks.length > 0
@@ -474,9 +526,12 @@
             connectedLinks
               .slice(0, 8)
               .map((lf) => {
-                const lp = lf.properties || {};
-                const otherId = String(lp.from_id) === pid ? lp.to_id : lp.from_id;
-                return `#${otherId} (${formatNumber(lp.length_m, 1)} m)`;
+                const ep = getLinkEndpoints(lf.properties);
+                const otherId = ep.from === pid ? ep.to : ep.from;
+                const distVal = getLinkDistance(lf.properties);
+                return distVal !== null
+                  ? `#${otherId} (${formatNumber(distVal, 1)} m)`
+                  : `#${otherId}`;
               })
               .join(", ") +
             (connectedLinks.length > 8 ? ` +${connectedLinks.length - 8} more` : "")
@@ -502,29 +557,29 @@
     function inspectLink(feature, latlng) {
       clearSelection();
       const props = feature.properties || {};
-      const fromId = String(props.from_id ?? "N/A");
-      const toId = String(props.to_id ?? "N/A");
+      const ep = getLinkEndpoints(props);
+      const distVal = getLinkDistance(props);
 
       L.geoJSON(feature, {
         pane: "highlightPane",
         style: {
-          color: "#ef4444",
+          color: "#facc15",
           weight: 4.5,
           opacity: 1
         }
       }).addTo(highlightGroup);
 
-      const patchA = patchLookup.get(fromId);
-      const patchB = patchLookup.get(toId);
+      const patchA = ep.from ? patchLookup.get(ep.from) : null;
+      const patchB = ep.to ? patchLookup.get(ep.to) : null;
       [patchA, patchB].forEach((pf) => {
         if (pf) {
           L.geoJSON(pf, {
             pane: "highlightPane",
             style: {
-              color: "#0284c7",
+              color: "#38bdf8",
               weight: 2.5,
-              fillColor: "#38bdf8",
-              fillOpacity: 0.45
+              fillColor: "#7dd3fc",
+              fillOpacity: 0.55
             }
           }).addTo(highlightGroup);
         }
@@ -532,34 +587,48 @@
 
       const areaAText = patchA ? ` (${formatNumber(patchA.properties.area_ha, 2)} ha)` : "";
       const areaBText = patchB ? ` (${formatNumber(patchB.properties.area_ha, 2)} ha)` : "";
+      const connectsLine =
+        ep.from && ep.to
+          ? `<br><strong>Connects:</strong> Patch #${ep.from}${areaAText} &harr; Patch #${ep.to}${areaBText}`
+          : "";
+      const distLine =
+        distVal !== null
+          ? `<br><strong>Link Metric / Distance:</strong> ${formatNumber(distVal, 2)}`
+          : "";
 
       const html = `
-        <strong>Threshold:</strong> ${activeThreshold} m dispersal<br>
-        <strong>Edge-to-Edge Distance:</strong> ${formatNumber(props.length_m, 1)} m<br>
-        <strong>Connects:</strong> Patch #${fromId}${areaAText} &harr; Patch #${toId}${areaBText}
+        <strong>Threshold:</strong> ${activeThreshold} m dispersal${distLine}${connectsLine}
       `;
 
-      inspectorTitle.textContent = `Potential Corridor Link`;
+      inspectorTitle.textContent = `Functional Corridor Link`;
       inspectorBody.innerHTML = html;
       inspectorBox.classList.add("visible");
 
       L.popup()
         .setLatLng(latlng)
-        .setContent(`<div class="popup-title">Potential Corridor (${activeThreshold} m)</div>${html}`)
+        .setContent(`<div class="popup-title">Functional Link (${activeThreshold} m)</div>${html}`)
         .openOn(map);
     }
 
     function updateStats() {
       const patchCount = patchesGeoJson ? patchesGeoJson.features.length.toLocaleString() : "0";
-      let linkText = "Hidden";
-      if (activeThreshold !== "none" && linkDataCache[activeThreshold]) {
-        const count = linkDataCache[activeThreshold].features.length.toLocaleString();
-        linkText = `${count} links (${activeThreshold} m threshold)`;
+      if (activeThreshold === "none" || !linkDataCache[activeThreshold]) {
+        statsBox.innerHTML = `
+          <strong>Dense Green Patches:</strong> ${patchCount}<br>
+          <strong>Functional Links:</strong> Hidden<br>
+          <span style="font-size:11px;color:#6b7280;">Click any dark green patch or red link to inspect connectivity.</span>
+        `;
+        return;
       }
+
+      const count = linkDataCache[activeThreshold].features.length.toLocaleString();
+      const meta = THRESHOLD_META[activeThreshold] || { components: "N/A", condition: "N/A" };
       statsBox.innerHTML = `
         <strong>Dense Green Patches:</strong> ${patchCount}<br>
-        <strong>Active Network:</strong> ${linkText}<br>
-        <span style="font-size:11px;color:#6b7280;">Click any green patch or purple corridor to inspect connectivity.</span>
+        <strong>Functional Links (${activeThreshold} m):</strong> ${count}<br>
+        <strong>Network Components:</strong> ${meta.components}<br>
+        <strong>Condition:</strong> ${meta.condition}<br>
+        <span style="font-size:11px;color:#6b7280;">Click any dark green patch or red link to inspect connectivity.</span>
       `;
     }
 
@@ -576,10 +645,10 @@
       patchesLayer = L.geoJSON(patchesGeoJson, {
         pane: "patchesPane",
         style: {
-          color: "#15803d",
-          weight: 0.6,
-          fillColor: "#22c55e",
-          fillOpacity: 0.68
+          color: "#022c22",
+          weight: 1.0,
+          fillColor: "#065f46",
+          fillOpacity: 0.82
         },
         onEachFeature: (feature, layer) => {
           layer.on("click", (e) => {
@@ -615,19 +684,19 @@
       }
 
       if (!linkDataCache[threshold]) {
-        showStatus(`Loading ${threshold} m dispersal links...`);
+        showStatus(`Loading ${threshold} m functional links...`);
         const res = await fetch(`./data/links_${threshold}.geojson`);
         if (!res.ok) throw new Error(`HTTP ${res.status} loading links_${threshold}.geojson`);
         linkDataCache[threshold] = await res.json();
-        showStatus(`Loaded ${threshold} m network`, false, 1800);
+        showStatus(`Loaded ${threshold} m functional network`, false, 1800);
       }
 
       activeLinksLayer = L.geoJSON(linkDataCache[threshold], {
         pane: "linksPane",
         style: {
-          color: "#7e22ce",
-          weight: threshold === "1000" ? 1.5 : 1.8,
-          opacity: 0.85
+          color: "#dc2626",
+          weight: threshold === "1000" ? 1.5 : 2.0,
+          opacity: 0.90
         },
         onEachFeature: (feature, layer) => {
           layer.on("click", (e) => {
@@ -686,7 +755,7 @@
       try {
         await loadPatches();
         await setThreshold("1000");
-        showStatus("Ready — click any patch or corridor link to inspect.", false, 3000);
+        showStatus("Ready — click any dark green patch or red link to inspect.", false, 3000);
       } catch (err) {
         console.error(err);
         showStatus(
